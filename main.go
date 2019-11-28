@@ -19,6 +19,7 @@ var (
 	history                                                 []riwayat
 	listMenu                                                [7]makanan
 	cek                                                     bool
+	angka                                                   []int
 )
 
 type riwayat struct {
@@ -56,14 +57,30 @@ func main() {
 		fmt.Println("----------------------------------------")
 	}
 	for {
-		fmt.Print("ketik aksi: ")
+		fmt.Print("Ketik Aksi: ")
 		scanner.Scan()
 		action = scanner.Text()
+		for !validateValidAction(action) {
+			if !validateValidAction(action) {
+				fmt.Println("AKSI TIDAK VALID")
+				fmt.Print("Ketik Aksi: ")
+				scanner.Scan()
+				action = scanner.Text()
+			}
+		}
 		fmt.Println()
 		if action == "pesan" {
 			fmt.Print("Nama Pemesan : ")
 			scanner.Scan()
 			nama = scanner.Text()
+			for !validateEmptyDataNama(nama) {
+				if !validateEmptyDataNama(nama) {
+					fmt.Println("NAMA TIDAK BOLEH KOSONG!!!")
+					fmt.Print("Nama: ")
+					scanner.Scan()
+					nama = scanner.Text()
+				}
+			}
 			cek, id = search(nama)
 			if nama == "done" {
 				break
@@ -99,14 +116,18 @@ func main() {
 
 //history
 func showHistory() {
-	t := table.NewWriter()
-	tTemp := table.Table{}
-	tTemp.Render()
-	t.AppendHeader(table.Row{"TANGGAL", "NAMA", "ORDER", "TOTAL"})
-	for i := 0; i < len(history); i++ {
-		t.AppendRow([]interface{}{history[i].date, history[i].nama, history[i].order, history[i].total})
+	if !validateEmptyHistory(history) {
+		fmt.Println("ANDA BELUM MELAKUKAN TRANSAKSI")
+	} else {
+		t := table.NewWriter()
+		tTemp := table.Table{}
+		tTemp.Render()
+		t.AppendHeader(table.Row{"TANGGAL", "NAMA", "ORDER", "TOTAL"})
+		for i := 0; i < len(history); i++ {
+			t.AppendRow([]interface{}{history[i].date, history[i].nama, history[i].order, history[i].total})
+		}
+		fmt.Println(t.Render())
 	}
-	fmt.Println(t.Render())
 }
 
 // sortDate
@@ -143,6 +164,8 @@ func tambahOrder(no int) {
 
 //pesan
 func pesan(cek bool, id int) {
+	fmt.Println()
+	fmt.Println("Masukkan Format Tanggal Seperti Berikut: dd/mm/yyyy")
 	fmt.Print("Tanggal : ")
 	scanner.Scan()
 	value = scanner.Text()
@@ -153,6 +176,14 @@ func pesan(cek bool, id int) {
 		fmt.Print("Ingin memesan ini?: ")
 		scanner.Scan()
 		pesanFav = scanner.Text()
+		for !validateValidPesanFav(pesanFav) {
+			if !validateValidPesanFav(pesanFav) {
+				fmt.Println("JAWABAN TIDAK VALID")
+				fmt.Print("Ingin memesan ini?: ")
+				scanner.Scan()
+				pesanFav = scanner.Text()
+			}
+		}
 
 		if pesanFav == "ya, itu saja" {
 			fmt.Print("Jumlah : ")
@@ -252,9 +283,28 @@ func create() {
 	fmt.Print("Nama: ")
 	scanner.Scan()
 	nama = scanner.Text()
+
+	for !validateEmptyDataNama(nama) {
+		if !validateEmptyDataNama(nama) {
+			fmt.Println("NAMA TIDAK BOLEH KOSONG!!!")
+			fmt.Print("Nama: ")
+			scanner.Scan()
+			nama = scanner.Text()
+		}
+	}
+
 	fmt.Print("Alamat: ")
 	scanner.Scan()
 	alamat = scanner.Text()
+
+	for !validateEmptyDataNama(alamat) {
+		if !validateEmptyDataNama(alamat) {
+			fmt.Println("ALAMAT TIDAK BOLEH KOSONG!!!")
+			fmt.Print("Alamat: ")
+			scanner.Scan()
+			alamat = scanner.Text()
+		}
+	}
 
 	costumer = append(
 		costumer,
@@ -386,4 +436,39 @@ func menu(id int, cek bool) {
 		t.AppendRow([]interface{}{"7", listMenu[6].nama, listMenu[6].harga})
 		fmt.Println(t.Render())
 	}
+}
+
+func validateEmptyDataNama(nama string) bool {
+	if len(nama) == 0 {
+		return false
+	}
+	return true
+}
+
+func validateEmptyDataAlamat(nama string) bool {
+	if len(nama) == 0 {
+		return false
+	}
+	return true
+}
+
+func validateValidAction(action string) bool {
+	if action == "pesan" || action == "menu1" || action == "history" || action == "mati" {
+		return true
+	}
+	return false
+}
+
+func validateEmptyHistory(history []riwayat) bool {
+	if len(history) == 0 {
+		return false
+	}
+	return true
+}
+
+func validateValidPesanFav(pesan string) bool {
+	if pesan == "ya, itu saja" || pesan == "ya, tampilkan menu yang lain juga" || pesan == "tidak, tampilkan menu lain" {
+		return true
+	}
+	return false
 }
