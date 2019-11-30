@@ -4,22 +4,23 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/jedib0t/go-pretty/table"
 )
 
 var (
-	tanggal                                                 time.Time
-	order                                                   []string
-	total                                                   float64
-	i, id, jml, no, all                                     int
-	action, nama, alamat, lagi, pesanFav, value, layoutDate string
-	costumer                                                []org
-	history                                                 []riwayat
-	listMenu                                                [7]makanan
-	cek                                                     bool
-	angka                                                   []int
+	tanggal                                                             time.Time
+	order                                                               []string
+	total                                                               float64
+	i, id, jml, all                                                     int
+	action, nama, alamat, lagi, pesanFav, value, layoutDate, jumlah, no string
+	costumer                                                            []org
+	history                                                             []riwayat
+	listMenu                                                            [7]makanan
+	cek                                                                 bool
+	angka                                                               []int
 )
 
 type riwayat struct {
@@ -31,7 +32,7 @@ type riwayat struct {
 type org struct {
 	id      int
 	nama    string
-	menuFav int
+	menuFav string
 	alamat  string
 }
 type makanan struct {
@@ -43,13 +44,6 @@ type makanan struct {
 var scanner = bufio.NewScanner(os.Stdin)
 
 func main() {
-	costumer = append(
-		costumer,
-		org{
-			nama:    "aryuska",
-			alamat:  "jatinangor",
-			menuFav: 1})
-
 	scanner.Scan()
 	action = scanner.Text()
 	if action == "turn on" {
@@ -57,7 +51,12 @@ func main() {
 		fmt.Println("----------------------------------------")
 	}
 	for {
-		fmt.Print("Ketik Aksi: ")
+		fmt.Println()
+		fmt.Println("1. Pesan")
+		fmt.Println("2. Lihat Kostumer Favorit Menu 1")
+		fmt.Println("3. Lihat Riwayat Transaksi")
+		fmt.Println("4. Keluar Program")
+		fmt.Print("Pilih Menu: ")
 		scanner.Scan()
 		action = scanner.Text()
 		for !validateValidAction(action) {
@@ -69,12 +68,12 @@ func main() {
 			}
 		}
 		fmt.Println()
-		if action == "pesan" {
+		if action == "1" {
 			fmt.Print("Nama Pemesan : ")
 			scanner.Scan()
 			nama = scanner.Text()
-			for !validateEmptyDataNama(nama) {
-				if !validateEmptyDataNama(nama) {
+			for !validateEmptyData(nama) {
+				if !validateEmptyData(nama) {
 					fmt.Println("NAMA TIDAK BOLEH KOSONG!!!")
 					fmt.Print("Nama: ")
 					scanner.Scan()
@@ -82,33 +81,42 @@ func main() {
 				}
 			}
 			cek, id = search(nama)
-			if nama == "done" {
-				break
-			}
+			// if nama == "done" {
+			// 	break
+			// }
 			if cek == true {
 				pesan(cek, id)
 			} else {
 				fmt.Println("ANDA MEMIIKI PELANGGAN BARU")
-				create()
+				create(nama)
 				pesan(cek, id)
 			}
-		} else if action == "menu1" {
+		} else if action == "2" {
+			j := 1
 			t := table.NewWriter()
 			tTemp := table.Table{}
 			tTemp.Render()
-			t.AppendHeader(table.Row{"NO", "NAMA"})
+			t.AppendHeader(table.Row{"NO", "ID", "NAMA"})
 			for i := 0; i < len(costumer); i++ {
-				if costumer[i].menuFav == 1 {
-					t.AppendRow([]interface{}{i + 1, costumer[i].nama})
+				if costumer[i].menuFav == "1" {
+					t.AppendRow([]interface{}{j, costumer[i].nama})
+					j++
 				}
 			}
 			fmt.Println(t.Render())
-		} else if action == "history" {
+		} else if action == "3" {
 			sortDate(history)
 			showHistory()
 		}
-		if action == "mati" {
-			break
+		if action == "4" {
+			fmt.Println("yakin keluar ? (y/n)")
+			fmt.Scan(&action)
+			if action == "y" {
+				break
+			} else if action == "n" {
+				main()
+			}
+
 		}
 	}
 
@@ -139,24 +147,24 @@ func sortDate(arr []riwayat) {
 				min = j
 			}
 		}
-		arr[min].date, arr[i].date = arr[i].date, arr[min].date
+		arr[min], arr[i] = arr[i], arr[min]
 	}
 }
 
-func tambahOrder(no int) {
-	if no == 1 {
+func tambahOrder(no string) {
+	if no == "1" {
 		order = append(order, "Nasi Uduk")
-	} else if no == 2 {
+	} else if no == "2" {
 		order = append(order, "Pecel Lele")
-	} else if no == 3 {
+	} else if no == "3" {
 		order = append(order, "Es Teh Manis")
-	} else if no == 4 {
+	} else if no == "4" {
 		order = append(order, "Ayam Bakar")
-	} else if no == 5 {
+	} else if no == "5" {
 		order = append(order, "Ayam Geprek")
-	} else if no == 6 {
+	} else if no == "6" {
 		order = append(order, "Es Jeruk")
-	} else if no == 7 {
+	} else if no == "7" {
 		order = append(order, "Nasi Putih")
 	}
 
@@ -169,47 +177,102 @@ func pesan(cek bool, id int) {
 	fmt.Print("Tanggal : ")
 	scanner.Scan()
 	value = scanner.Text()
+	for !validateEmptyData(value) {
+		if !validateEmptyData(value) {
+			fmt.Println("Tanggal Tidak Boleh Kosong")
+			fmt.Println("Masukkan Format Tanggal Seperti Berikut: dd/mm/yyyy")
+			fmt.Print("Tanggal : ")
+			scanner.Scan()
+			value = scanner.Text()
+		}
+	}
 	layoutDate = "2/1/2006"
 	tanggal, _ = time.Parse(layoutDate, value)
 	if cek == true {
 		menu(id, cek)
+		fmt.Println("1. ya, itu saja")
+		fmt.Println("2. ya, tapi tampilkan menu lain juga")
+		fmt.Println("3. tidak, tampilkan menu lain")
 		fmt.Print("Ingin memesan ini?: ")
 		scanner.Scan()
 		pesanFav = scanner.Text()
-		for !validateValidPesanFav(pesanFav) {
-			if !validateValidPesanFav(pesanFav) {
-				fmt.Println("JAWABAN TIDAK VALID")
-				fmt.Print("Ingin memesan ini?: ")
-				scanner.Scan()
-				pesanFav = scanner.Text()
+		_, err := strconv.Atoi(pesanFav)
+		for err != nil {
+			if _, err = strconv.Atoi(pesanFav); err != nil {
+				fmt.Println(" No Menu Harus Dimasukkan dengan angka")
 			}
+			fmt.Print("No : ")
+			fmt.Scanln(&pesanFav)
+			_, err = strconv.Atoi(pesanFav)
 		}
 
-		if pesanFav == "ya, itu saja" {
+		if pesanFav == "1" {
 			fmt.Print("Jumlah : ")
-			fmt.Scanln(&jml)
+			scanner.Scan()
+			jumlah = scanner.Text()
+			jml, err := strconv.Atoi(jumlah)
+			for err != nil {
+				if _, err = strconv.Atoi(jumlah); err != nil {
+					fmt.Println("Jumlah Harus Dimasukkan dengan angka")
+				}
+				fmt.Print("Jumlah : ")
+				scanner.Scan()
+				jumlah = scanner.Text()
+				jml, err = strconv.Atoi(jumlah)
+			}
+
 			no = costumer[id].menuFav
 			tambahOrder(no)
 
 			all = all + showTotal(no, jml)
 			fmt.Println("Total : Rp.", all)
 			//all = 0
-		} else if pesanFav == "ya, tapi tampilkan menu lain juga" {
+		} else if pesanFav == "2" {
 			no = costumer[id].menuFav
 
 			tambahOrder(no)
 			fmt.Print("Jumlah : ")
-			fmt.Scanln(&jml)
+			scanner.Scan()
+			jumlah = scanner.Text()
+			jml, err := strconv.Atoi(jumlah)
+			for err != nil {
+				if _, err = strconv.Atoi(jumlah); err != nil {
+					fmt.Println("Jumlah Harus Dimasukkan dengan angka")
+				}
+				fmt.Print("Jumlah : ")
+				scanner.Scan()
+				jumlah = scanner.Text()
+				jml, err = strconv.Atoi(jumlah)
+			}
 			all = all + showTotal(no, jml)
 			menu(id, false)
 			for {
 				fmt.Print("No : ")
 				fmt.Scanln(&no)
-
+				_, err = strconv.Atoi(no)
+				for err != nil {
+					if _, err = strconv.Atoi(no); err != nil {
+						fmt.Println(" No Menu Harus Dimasukkan dengan angka")
+					}
+					fmt.Print("No : ")
+					fmt.Scanln(&no)
+					_, err = strconv.Atoi(no)
+				}
 				tambahOrder(no)
 
 				fmt.Print("Jumlah : ")
-				fmt.Scanln(&jml)
+				scanner.Scan()
+				jumlah = scanner.Text()
+				jml, err := strconv.Atoi(jumlah)
+				for err != nil {
+					if _, err = strconv.Atoi(jumlah); err != nil {
+						fmt.Println("Jumlah Harus Dimasukkan dengan angka")
+					}
+					fmt.Print("Jumlah : ")
+					scanner.Scan()
+					jumlah = scanner.Text()
+					jml, err = strconv.Atoi(jumlah)
+				}
 				all = all + showTotal(no, jml)
 				fmt.Print("Tambah lagi??")
 				fmt.Scanln(&lagi)
@@ -219,16 +282,36 @@ func pesan(cek bool, id int) {
 					break
 				}
 			}
-		} else if pesanFav == "tidak, tampilkan menu lain" {
+		} else if pesanFav == "3" {
 			menu(id, false)
 			for {
 				fmt.Print("No : ")
 				fmt.Scanln(&no)
+				_, err := strconv.Atoi(no)
+				for err != nil {
+					if _, err = strconv.Atoi(no); err != nil {
+						fmt.Println(" No Menu Harus Dimasukkan dengan angka")
+					}
+					fmt.Print("No : ")
+					fmt.Scanln(&no)
+					_, err = strconv.Atoi(no)
+				}
 
 				tambahOrder(no)
 
 				fmt.Print("Jumlah : ")
-				fmt.Scanln(&jml)
+				scanner.Scan()
+				jumlah = scanner.Text()
+				jml, err := strconv.Atoi(jumlah)
+				for err != nil {
+					if _, err = strconv.Atoi(jumlah); err != nil {
+						fmt.Println("Jumlah Harus Dimasukkan dengan angka")
+					}
+					fmt.Print("Jumlah : ")
+					scanner.Scan()
+					jumlah = scanner.Text()
+					jml, err = strconv.Atoi(jumlah)
+				}
 				all = 0
 				all = all + showTotal(no, jml)
 				fmt.Print("Tambah lagi??")
@@ -246,10 +329,30 @@ func pesan(cek bool, id int) {
 		for {
 			fmt.Print("No : ")
 			fmt.Scanln(&no)
+			_, err := strconv.Atoi(no)
+			for err != nil {
+				if _, err = strconv.Atoi(no); err != nil {
+					fmt.Println(" No Menu Harus Dimasukkan dengan angka")
+				}
+				fmt.Print("No : ")
+				fmt.Scanln(&no)
+				_, err = strconv.Atoi(no)
+			}
 
 			tambahOrder(no)
 			fmt.Print("Jumlah : ")
-			fmt.Scanln(&jml)
+			scanner.Scan()
+			jumlah = scanner.Text()
+			jml, err := strconv.Atoi(jumlah)
+			for err != nil {
+				if _, err = strconv.Atoi(jumlah); err != nil {
+					fmt.Println("Jumlah Harus Dimasukkan dengan angka")
+				}
+				fmt.Print("Jumlah : ")
+				scanner.Scan()
+				jumlah = scanner.Text()
+				jml, err = strconv.Atoi(jumlah)
+			}
 			if fav < jml {
 				fav = jml
 				costumer[id].menuFav = no
@@ -278,27 +381,15 @@ func pesan(cek bool, id int) {
 }
 
 //create
-func create() {
+func create(nama string) {
 	i = 1
-	fmt.Print("Nama: ")
-	scanner.Scan()
-	nama = scanner.Text()
-
-	for !validateEmptyDataNama(nama) {
-		if !validateEmptyDataNama(nama) {
-			fmt.Println("NAMA TIDAK BOLEH KOSONG!!!")
-			fmt.Print("Nama: ")
-			scanner.Scan()
-			nama = scanner.Text()
-		}
-	}
-
+	fmt.Println("Nama: ", nama)
 	fmt.Print("Alamat: ")
 	scanner.Scan()
 	alamat = scanner.Text()
 
-	for !validateEmptyDataNama(alamat) {
-		if !validateEmptyDataNama(alamat) {
+	for !validateEmptyData(alamat) {
+		if !validateEmptyData(alamat) {
 			fmt.Println("ALAMAT TIDAK BOLEH KOSONG!!!")
 			fmt.Print("Alamat: ")
 			scanner.Scan()
@@ -312,7 +403,7 @@ func create() {
 			id:      i,
 			nama:    nama,
 			alamat:  alamat,
-			menuFav: 0})
+			menuFav: ""})
 	i++
 }
 
@@ -330,32 +421,32 @@ func search(nama string) (bool, int) {
 }
 
 //total
-func showTotal(no int, jml int) int {
+func showTotal(no string, jml int) int {
 	total := 0
 
-	if no == 1 {
+	if no == "1" {
 		total = (listMenu[0].harga * jml)
-	} else if no == 2 {
+	} else if no == "2" {
 		total = listMenu[1].harga * jml
-	} else if no == 3 {
+	} else if no == "3" {
 		total = (listMenu[2].harga * jml)
-	} else if no == 4 {
+	} else if no == "4" {
 		total = (listMenu[3].harga * jml)
-	} else if no == 5 {
+	} else if no == "5" {
 		total = (listMenu[4].harga * jml)
-	} else if no == 6 {
+	} else if no == "6" {
 		total = (listMenu[5].harga * jml)
-	} else if no == 7 {
+	} else if no == "7" {
 		total = (listMenu[6].harga * jml)
 	}
 
-	if no == 2 && jml == 2 {
+	if no == "2" && jml == 2 {
 		total = total - ((listMenu[1].harga * jml * 25) / 100)
-	} else if no == 1 && jml == 5 {
+	} else if no == "1" && jml == 5 {
 		total = total - ((listMenu[0].harga * jml * 20) / 100)
-	} else if no == 5 {
+	} else if no == "5" {
 		total = total - ((listMenu[4].harga * jml * 20) / 100)
-	} else if no == 3 && jml == 2 {
+	} else if no == "3" && jml == 2 {
 		total = total - ((listMenu[2].harga * jml * 25) / 100)
 	}
 
@@ -396,64 +487,53 @@ func menu(id int, cek bool) {
 	tTemp := table.Table{}
 	tTemp.Render()
 	if cek == true {
-		if costumer[id].menuFav == 1 {
+		if costumer[id].menuFav == "1" {
 			t.AppendHeader(table.Row{"NO", "NAMA", "HARGA"})
 			t.AppendRow([]interface{}{"1", listMenu[0].nama, listMenu[0].harga})
 			fmt.Println(t.Render())
-		} else if costumer[id].menuFav == 2 {
+		} else if costumer[id].menuFav == "2" {
 			t.AppendHeader(table.Row{"NO", "NAMA", "HARGA"})
 			t.AppendRow([]interface{}{"2", listMenu[1].nama, listMenu[1].harga})
 			fmt.Println(t.Render())
-		} else if costumer[id].menuFav == 3 {
+		} else if costumer[id].menuFav == "3" {
 			t.AppendHeader(table.Row{"NO", "NAMA", "HARGA"})
 			t.AppendRow([]interface{}{"3", listMenu[2].nama, listMenu[2].harga})
 			fmt.Println(t.Render())
-		} else if costumer[id].menuFav == 4 {
+		} else if costumer[id].menuFav == "4" {
 			t.AppendHeader(table.Row{"NO", "NAMA", "HARGA"})
 			t.AppendRow([]interface{}{"4", listMenu[3].nama, listMenu[3].harga})
 			fmt.Println(t.Render())
-		} else if costumer[id].menuFav == 5 {
+		} else if costumer[id].menuFav == "5" {
 			t.AppendHeader(table.Row{"NO", "NAMA", "HARGA"})
 			t.AppendRow([]interface{}{"5", listMenu[4].nama, listMenu[4].harga})
 			fmt.Println(t.Render())
-		} else if costumer[id].menuFav == 6 {
+		} else if costumer[id].menuFav == "6" {
 			t.AppendHeader(table.Row{"NO", "NAMA", "HARGA"})
 			t.AppendRow([]interface{}{"6", listMenu[5].nama, listMenu[5].harga})
 			fmt.Println(t.Render())
-		} else if costumer[id].menuFav == 7 {
+		} else if costumer[id].menuFav == "7" {
 			t.AppendHeader(table.Row{"NO", "NAMA", "HARGA"})
 			t.AppendRow([]interface{}{"7", listMenu[6].nama, listMenu[6].harga})
 			fmt.Println(t.Render())
 		}
 	} else if cek == false {
 		t.AppendHeader(table.Row{"NO", "NAMA", "HARGA"})
-		t.AppendRow([]interface{}{"1", listMenu[0].nama, listMenu[0].harga})
-		t.AppendRow([]interface{}{"2", listMenu[1].nama, listMenu[1].harga})
-		t.AppendRow([]interface{}{"3", listMenu[2].nama, listMenu[2].harga})
-		t.AppendRow([]interface{}{"4", listMenu[3].nama, listMenu[3].harga})
-		t.AppendRow([]interface{}{"5", listMenu[4].nama, listMenu[4].harga})
-		t.AppendRow([]interface{}{"6", listMenu[5].nama, listMenu[5].harga})
-		t.AppendRow([]interface{}{"7", listMenu[6].nama, listMenu[6].harga})
+		for i := 0; i < 7; i++ {
+			t.AppendRow([]interface{}{i + 1, listMenu[i].nama, listMenu[i].harga})
+		}
 		fmt.Println(t.Render())
 	}
 }
 
-func validateEmptyDataNama(nama string) bool {
-	if len(nama) == 0 {
-		return false
-	}
-	return true
-}
-
-func validateEmptyDataAlamat(nama string) bool {
-	if len(nama) == 0 {
+func validateEmptyData(isi string) bool {
+	if len(isi) == 0 {
 		return false
 	}
 	return true
 }
 
 func validateValidAction(action string) bool {
-	if action == "pesan" || action == "menu1" || action == "history" || action == "mati" {
+	if action == "1" || action == "2" || action == "3" || action == "4" {
 		return true
 	}
 	return false
@@ -467,7 +547,14 @@ func validateEmptyHistory(history []riwayat) bool {
 }
 
 func validateValidPesanFav(pesan string) bool {
-	if pesan == "ya, itu saja" || pesan == "ya, tampilkan menu yang lain juga" || pesan == "tidak, tampilkan menu lain" {
+	if pesan == "ya, itu saja" || pesan == "ya, tapi tampilkan menu lain juga" || pesan == "tidak, tampilkan menu lain" {
+		return true
+	}
+	return false
+}
+
+func validateMenu(no string) bool {
+	if no == "1" || no == "2" || no == "3" || no == "4" || no == "5" || no == "6" || no == "7" {
 		return true
 	}
 	return false
